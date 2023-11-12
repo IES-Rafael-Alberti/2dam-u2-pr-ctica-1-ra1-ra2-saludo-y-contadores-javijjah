@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -35,25 +36,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    //todo aquí van las funciones
-                Saludar()
+                    Saludar()
                 }
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun IntroductorNombre() {
-    /* var tempName by rememberSaveable {
-         mutableStateOf("")
-     }*/
-    //if (showDialog) {
-    //todo cambiar a dialog
-    //todo los botones pueden ser 1 letra para que quepa todo
-    //}
 }
 
 @Preview(showBackground = true)
@@ -63,50 +50,80 @@ fun Saludar() {
     var contadorAceptar by rememberSaveable { mutableStateOf(0) }
     var contadorLimpiar by rememberSaveable { mutableStateOf(0) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
-    BotonSaludar(nombre = nombre, showDialog = showDialog,
-        )
+    var showDialogLambda: () -> Unit = {
+        showDialog = !showDialog
+    }
+    var nombreUpdaterLambda: (String) -> Unit = { tempName ->
+        nombre = tempName
+    }
+    var nombreCleaner: () -> Unit = {
+        nombre = ""
+    }
+    BotonSaludar(
+        nombre = nombre,
+        showDialog = showDialog,
+        showDialogLambda = showDialogLambda,
+        nombreUpdaterLambda = nombreUpdaterLambda,
+        nombreCleaner = nombreCleaner
+    )
+
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BotonSaludar(nombre:String,showDialog:Boolean) {
+fun BotonSaludar(
+    nombre: String,
+    showDialog: Boolean,
+    showDialogLambda: () -> Unit,
+    nombreUpdaterLambda: (String) -> Unit,
+    nombreCleaner: () -> Unit
+) {
     SaludoYContadoresTheme {
         Column(
-            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(onClick = { showDialog = true })//todo lo mismo que abajo
+            Button(onClick = showDialogLambda)
             {
                 Text("Saludar")
             }
-            Text(text = "")//todo rellenar si hay nombre
+            if (nombre.isNotBlank()) {
+                Text(text = " Hola, $nombre!")
+            }//todo rellenar si hay nombre
         }
-        if (showDialog){
+        if (showDialog) {
             AlertDialog(
-                onDismissRequest = { /*TODO*/ },
-                confirmButton = { /*TODO*/ },
+                onDismissRequest = showDialogLambda,
+                confirmButton = {
+                    Button(onClick = showDialogLambda) {
+                        Text("A")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = nombreCleaner) {
+                        Text("C")
+                    }
+                    Button(onClick = showDialogLambda) {
+                        Text("L") //todo preguntar qué debe hacer cancelar
+                    }
+                },
                 title = {
                     Text(
                         text = "Configuración",
-                        modifier = Modifier.fillMaxWidth(),
                         fontSize = 35.sp,
                         textAlign = TextAlign.Right
                     )
                 },
                 text = {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column {
                         TextField(
                             value = nombre,
-                            onValueChange = { tempName -> nombre = tempName },//todo esto falla porque al estar elevado el estado hay que elevar la lambda también y llamarla aquí.¿Cómo? no sé
+                            onValueChange = nombreUpdaterLambda,
                             label = { Text("Introduce tu nombre") }
                         )
                     }
                 },
-                modifier = Modifier.fillMaxSize()
             )
         }
     }
