@@ -5,9 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,11 +45,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Saludar() {
     var nombre by rememberSaveable { mutableStateOf("") }
+    var ButtonText by rememberSaveable { mutableStateOf("Saludar") }
     var contadorAceptar by rememberSaveable { mutableStateOf(0) }
-    var contadorLimpiar by rememberSaveable { mutableStateOf(0) }
+    var contadorCancelar by rememberSaveable { mutableStateOf(0) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var showDialogLambda: () -> Unit = {
         showDialog = !showDialog
+        ButtonText = "A:$contadorAceptar C:$contadorCancelar"
     }
     var nombreUpdaterLambda: (String) -> Unit = { tempName ->
         nombre = tempName
@@ -59,25 +59,35 @@ fun Saludar() {
     var nombreCleaner: () -> Unit = {
         nombre = ""
     }
+    var contadorAceptarLambda: () -> Unit = {
+        contadorAceptar++
+    }
+    var contadorCancelarLambda: () -> Unit = {
+        contadorCancelar++
+    }
     BotonSaludar(
         nombre = nombre,
+        ButtonText = ButtonText,
         showDialog = showDialog,
         showDialogLambda = showDialogLambda,
         nombreUpdaterLambda = nombreUpdaterLambda,
-        nombreCleaner = nombreCleaner
+        nombreCleaner = nombreCleaner,
+        contadorAceptarLambda = contadorAceptarLambda,
+        contadorCancelarLambda = contadorCancelarLambda,
     )
-
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BotonSaludar(
     nombre: String,
+    ButtonText: String,
     showDialog: Boolean,
     showDialogLambda: () -> Unit,
     nombreUpdaterLambda: (String) -> Unit,
-    nombreCleaner: () -> Unit
+    nombreCleaner: () -> Unit,
+    contadorAceptarLambda: () -> Unit,
+    contadorCancelarLambda: () -> Unit
 ) {
     SaludoYContadoresTheme {
         Column(
@@ -86,7 +96,7 @@ fun BotonSaludar(
         ) {
             Button(onClick = showDialogLambda)
             {
-                Text("Saludar")
+                Text(ButtonText)
             }
             if (nombre.isNotBlank()) {
                 Text(text = " Hola, $nombre!")
@@ -96,16 +106,22 @@ fun BotonSaludar(
             AlertDialog(
                 onDismissRequest = showDialogLambda,
                 confirmButton = {
-                    Button(onClick = showDialogLambda) {
+                    Button(onClick = {
+                        showDialogLambda()
+                        contadorAceptarLambda()
+                    }) {
                         Text("A")
                     }
                 },
                 dismissButton = {
                     Button(onClick = nombreCleaner) {
-                        Text("C")
+                        Text("L")
                     }
-                    Button(onClick = showDialogLambda) {
-                        Text("L") //todo preguntar qué debe hacer cancelar
+                    Button(onClick = {
+                        showDialogLambda()
+                        contadorCancelarLambda()
+                    }) {
+                        Text("C") //todo preguntar qué debe hacer cancelar
                     }
                 },
                 title = {
